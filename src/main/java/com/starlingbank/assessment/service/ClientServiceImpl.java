@@ -251,7 +251,6 @@ public class ClientServiceImpl implements ClientService {
             LOGGER.warn("Last transaction for savings account was a withdraw");
             throw new Exception();
         }
-
     }
 
     public boolean checkIfRoundUpServicePushesBalanceIntoOverDraft(String accountUid, int savingsAddition) throws Exception {

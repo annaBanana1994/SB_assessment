@@ -1,5 +1,6 @@
 package com.starlingbank.assessment.model.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
