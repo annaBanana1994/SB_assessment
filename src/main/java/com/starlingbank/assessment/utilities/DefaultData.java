@@ -6,6 +6,7 @@ import com.starlingbank.assessment.model.payload.Target;
 
 public class DefaultData {
 
+    public final static String AUTHORIZATION_NAME ="Bearer ";
 
     public final static String SAVINGS_GOALS_NAME="Future Adventures";
 

@@ -1,8 +1,10 @@
 package com.starlingbank.assessment.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.starlingbank.assessment.model.Account;
 import com.starlingbank.assessment.model.FeedItemSummary;
 import com.starlingbank.assessment.model.SavingAccountSummary;
+import com.starlingbank.assessment.model.clientResponse.Accounts;
 import com.starlingbank.assessment.model.response.RoundUpResponseMessage;
 import com.starlingbank.assessment.utilities.DefaultData;
 import org.slf4j.Logger;
@@ -30,12 +32,12 @@ public class RoundUpServiceImpl implements RoundUpService{
 
             LOGGER.debug("Going into Client Service Layer: Access Token: "+accountHolderAccessToken);
             //Get account holder's accounts
-            List<Account> accountHolderAccounts = clientService.getAccountHoldersAccounts(accountHolderAccessToken);
+            Accounts accountHolderAccounts =clientService.getAccountHoldersAccounts(accountHolderAccessToken);
 
 
             LOGGER.debug("Locates first account in list returned from client side");
             //ASSUMPTION - Just one account
-            Account account = accountHolderAccounts.get(0);
+            Account account = accountHolderAccounts.getAccounts().get(0);
 
             // Haven't added logic yet
 

@@ -2,6 +2,8 @@ package com.starlingbank.assessment.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.starlingbank.assessment.model.*;
+import com.starlingbank.assessment.model.clientResponse.Accounts;
+import com.starlingbank.assessment.model.clientResponse.SavingAccounts;
 import com.starlingbank.assessment.model.payload.AddToSavingsInfo;
 import com.starlingbank.assessment.model.payload.Amount;
 import com.starlingbank.assessment.model.payload.NewSavingsGoalsAccountInfo;
@@ -21,6 +23,9 @@ import java.util.*;
 @Service
 public class ClientServiceImpl implements ClientService {
 
+    @Autowired
+    private RestTemplate restTemplate;
+
     // Dont Think you can use this method with custom hearderss
     // RequestEntity<MyRequest> request = RequestEntity
     //     .post("https://example.com/{foo}", "bar")
@@ -29,32 +34,35 @@ public class ClientServiceImpl implements ClientService {
 
     private static final Logger LOGGER= LoggerFactory.getLogger(ClientServiceImpl.class);
 
-    @Autowired
-    private RestTemplate restTemplate;
-
-    @Value("${clientAPI.accessToken}")
     private String accessToken;
 
     @Value("${clientAPI.rootPath}")
     private String rootPath;
 
     HttpHeaders headers = new HttpHeaders();
+
+    public void createAuthorizationValue(String accountHolderAccessToken){
+        this.accessToken = DefaultData.AUTHORIZATION_NAME+accountHolderAccessToken;
+    }
+
     public HttpHeaders buildHeaders() {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", accessToken);
         return headers;
     }
 
-    public List<Account> getAccountHoldersAccounts(String accountHolderAccessToken) throws Exception {
+    public Accounts getAccountHoldersAccounts(String accountHolderAccessToken) throws Exception {
+            createAuthorizationValue(accountHolderAccessToken);
             // Unsure if calling the method to build headers will work
             // build the request
             HttpEntity request = new HttpEntity(buildHeaders());
 
             String url = rootPath + "/accounts";
+            LOGGER.debug(url);
 
             LOGGER.info("Making external call for list of Account Holder's accounts");
             // HTTP call
-            ResponseEntity<List> response = this.restTemplate.exchange(url, HttpMethod.GET, request, List.class);
+            ResponseEntity<Accounts> response = this.restTemplate.exchange(url, HttpMethod.GET, request, Accounts.class);
             if (response.getStatusCode() == HttpStatus.OK) {
                 return response.getBody();
             } else {
@@ -67,18 +75,24 @@ public class ClientServiceImpl implements ClientService {
             // build the request
             HttpEntity request = new HttpEntity(buildHeaders());
 
-            String url = rootPath + "/account/{" + accountUid + "}/savings-goals";
+            String url = rootPath + "/account/" + accountUid + "/savings-goals";
 
             // HTTP call
             LOGGER.info("Making external call for list of account's savings accounts");
-            ResponseEntity<List> response = this.restTemplate.exchange(url, HttpMethod.GET, request, List.class);
+            ResponseEntity<SavingAccounts> response = this.restTemplate.exchange(url, HttpMethod.GET, request,
+                    SavingAccounts.class);
 
             SavingAccountSummary savingAccountSummary;
 
+
+            // TODO LINKED HASHMAP
+
+            /// If this doesnt work try linked hashMap to get the values required
             if (response.getStatusCode() == HttpStatus.OK) {
-                List<JsonNode> listOfSavings = response.getBody();
+                List<JsonNode> listOfSavings = null;
+//                        response.getBody().getSavingAccounts();
                 JsonNode jsonNode = null;
-                if (listOfSavings.isEmpty()) {
+                if (listOfSavings==null) {
                     LOGGER.debug("Account has no savings accounts");
                     //create new account
                     savingAccountSummary = createFutureAdventuresSavingsAccount(accountUid, currency);
@@ -111,7 +125,7 @@ public class ClientServiceImpl implements ClientService {
         //build request
         HttpEntity<NewSavingsGoalsAccountInfo> request = new HttpEntity<>(newSavingsGoalsAccountInfo, buildHeaders());
 
-        String url = rootPath+"/account/{"+accountUid+"}/savings-goals";
+        String url = rootPath+"/account/"+accountUid+"/savings-goals";
 
         // HTTP call
         LOGGER.info("Making external call to create savings account");
@@ -134,7 +148,7 @@ public class ClientServiceImpl implements ClientService {
             //build request
             HttpEntity request = new HttpEntity(buildHeaders());
 
-            String url = rootPath + "/account/{" + accountUid + "}/savings-goals/{" + savingsGoalUid + "}";
+            String url = rootPath + "/account/" + accountUid + "/savings-goals/" + savingsGoalUid + "";
 
             LOGGER.debug("Making external call to get savings account "+savingsGoalUid);
             // HTTP call
@@ -163,7 +177,7 @@ public class ClientServiceImpl implements ClientService {
         // build the request
         HttpEntity request = new HttpEntity(buildHeaders());
 
-        String url = rootPath+"/feed/account/{"+accountUid+"}/category/{"+defaultCategory+"}/transactions-between?" +
+        String url = rootPath+"/feed/account/"+accountUid+"/category/"+defaultCategory+"/transactions-between?" +
                 "minTransactionTimestamp="+lastTimeStamp+"&maxTransactionTimestamp"+currentTimeStamp;
 
         LOGGER.info("Making external call to get feed of transaction between "+lastTimeStamp+" and "+currentTimeStamp);
@@ -204,7 +218,7 @@ public class ClientServiceImpl implements ClientService {
         //build request
         HttpEntity<AddToSavingsInfo> request = new HttpEntity<>(addToSavingsInfo, buildHeaders());
 
-        String url = rootPath+"/account/{"+accountUid+"}/savings-goals/{"+savingsAccount.getSavingsGoalUid()+"{/add-" +
+        String url = rootPath+"/account/"+accountUid+"/savings-goals/"+savingsAccount.getSavingsGoalUid()+"/add-" +
                 "money/{"+transferId+"}";
 
         LOGGER.info("Making external call to transfer money into savings");
@@ -229,7 +243,7 @@ public class ClientServiceImpl implements ClientService {
 
         // Get feed from past month
         Instant monthAgo=instant.minus(1, ChronoUnit.MONTHS);
-        String url = rootPath+"/feed/account/{"+accountUid+"}/category/{"+savingsGoalUid+"}" +
+        String url = rootPath+"/feed/account/"+accountUid+"/category/"+savingsGoalUid+"" +
                 "?changesSince="+monthAgo.toEpochMilli();
 
         LOGGER.info("Making external call for savings account transactions since "+monthAgo.toEpochMilli());
@@ -257,7 +271,7 @@ public class ClientServiceImpl implements ClientService {
         // build the request
         HttpEntity request = new HttpEntity(buildHeaders());
 
-        String url = rootPath+"/accounts/{"+accountUid+"}/confirmation-of-funds?targetAmountInMinorUnits="
+        String url = rootPath+"/accounts/"+accountUid+"/confirmation-of-funds?targetAmountInMinorUnits="
                 +savingsAddition;
 
         LOGGER.info("Making external call to check if funds available");
