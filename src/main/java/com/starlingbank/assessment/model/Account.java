@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class Account {
-
     String accountUid;
     String accountType;
     String defaultCategory;

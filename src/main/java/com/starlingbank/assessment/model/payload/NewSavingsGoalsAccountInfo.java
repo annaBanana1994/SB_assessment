@@ -1,4 +1,4 @@
-package com.starlingbank.assessment.model;
+package com.starlingbank.assessment.model.payload;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,5 +10,4 @@ public class NewSavingsGoalsAccountInfo {
     String currency;
     Target target;
     String base64EncodedPhoto;
-
 }

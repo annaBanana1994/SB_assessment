@@ -5,21 +5,23 @@ import com.starlingbank.assessment.model.Account;
 import com.starlingbank.assessment.model.FeedItemSummary;
 import com.starlingbank.assessment.model.SavingAccountSummary;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface ClientService {
 
-    List<Account> getAccountHoldersAccounts(String accountHolderAccessToken);
+    List<Account> getAccountHoldersAccounts(String accountHolderAccessToken) throws Exception;
 
-    SavingAccountSummary getSavingsAccount(String accountUid) throws JsonProcessingException;
+    SavingAccountSummary getSavingsAccount(String accountUid, String currency) throws Exception;
 
-    List<FeedItemSummary> getWeeksTransactions(String accountUid, String defaultCategory, String lastTimeStamp, String currentTimeStamp);
+    List<FeedItemSummary> getWeeksTransactions(String accountUid, String defaultCategory, String lastTimeStamp, String currentTimeStamp) throws Exception;
 
-    void transferToSavingsAccount(SavingAccountSummary savingsAccount, int savingsAddition, String accountUid, String transferId);
+    boolean transferToSavingsAccount(SavingAccountSummary savingsAccount, int savingsAddition, String accountUid, int transferUid) throws Exception;
 
-    String getLastRoundUpTransferTimeStamp(String savingsGoalUid);
+    //Check refernce if it has one
+    String getLastRoundUpTransferTimeStamp(String accountUid, String savingsGoalUid, Instant instant) throws Exception;
 
-    boolean checkIfRoundUpServicePushesBalanceIntoOverDraft(String accountUid, int savingsAddition);
+    boolean checkIfRoundUpServicePushesBalanceIntoOverDraft(String accountUid, int savingsAddition) throws Exception;
 }
 
 

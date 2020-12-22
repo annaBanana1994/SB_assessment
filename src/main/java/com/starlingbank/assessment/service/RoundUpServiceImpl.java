@@ -1,84 +1,134 @@
 package com.starlingbank.assessment.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.starlingbank.assessment.model.Account;
 import com.starlingbank.assessment.model.FeedItemSummary;
 import com.starlingbank.assessment.model.SavingAccountSummary;
+import com.starlingbank.assessment.model.response.RoundUpResponseMessage;
+import com.starlingbank.assessment.utilities.DefaultData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class RoundUpServiceImpl implements RoundUpService{
 
+    private static final Logger LOGGER= LoggerFactory.getLogger(RoundUpServiceImpl.class);
+
     @Autowired
     ClientService clientService;
 
-    public String transferWeeksSavings(String accountHolderAccessToken) throws JsonProcessingException {
-        //Get account information
-        List<Account> accountHolderAccounts =clientService.getAccountHoldersAccounts(accountHolderAccessToken);
-        //ASSUME just one account for now - due to response
-        //for each account added in later but well just take the first one for now
+    public RoundUpResponseMessage transferWeeksSavings(String accountHolderAccessToken) throws Exception {
+        try {
+            LOGGER.info("In transferWeeksSavings method");
+            //Create response
+            RoundUpResponseMessage response = new RoundUpResponseMessage();
 
-        Account account =accountHolderAccounts.get(0);
-
-        //Haven't added logic yet
-//        if(!accountChecks(account))
-//            throw exception with error message
-
-        String accountUid=account.getAccountUid();
-
-        //Get savings account
-        //check the name reference or soemthing if more/and create if none
-        SavingAccountSummary savingsAccount=clientService.getSavingsAccount(accountUid);
-
-        // last time stamp from feed of this savings account //check the reference and everything
-        //checks of reference / name if there is one but still not sure on how this follows through
-        String lastTimeStamp=clientService.getLastRoundUpTransferTimeStamp(savingsAccount.getSavingsGoalUid());
-
-        Instant instant = Instant.now();
-        long currentTimeStamp = instant.toEpochMilli();
-
-        //Haven't added logic yet
-//        if(!checkIfTransferHasBeenLongerThanAWeek(lastTimeStamp,currentTimeStamp))
-//            //add message that the savings haven't been added to at correct times
-//            ;
-
-        //calculate how much going into savings
-        int savingsAddition= calculatingWeeklySavings(accountUid, account.getDefaultCategory(), lastTimeStamp, String.valueOf(currentTimeStamp));
+            LOGGER.debug("Going into Client Service Layer: Access Token: "+accountHolderAccessToken);
+            //Get account holder's accounts
+            List<Account> accountHolderAccounts = clientService.getAccountHoldersAccounts(accountHolderAccessToken);
 
 
-        // get balance check - if true - or if warning in overdraft
-        String message= (clientService.checkIfRoundUpServicePushesBalanceIntoOverDraft(accountUid,savingsAddition))
-                ? "Funds available":"In overdraft";
+            LOGGER.debug("Locates first account in list returned from client side");
+            //ASSUMPTION - Just one account
+            Account account = accountHolderAccounts.get(0);
 
-        String transferId="";
-        //Transfer to savings account
-        clientService.transferToSavingsAccount(savingsAccount, savingsAddition, accountUid, transferId);
-        //result needs to know if success you know
+            // Haven't added logic yet
 
-        //success message - with note of overdraft
+            if(!accountChecks(account)) {
+                LOGGER.debug("Account, with accountUid "+account.getAccountUid()+", check result: negative");
+                response.setSuccessfulTransfer(false);
+                response.setMessage(DefaultData.CHECK_ACCOUNT_FAIL+DefaultData.LINE_BREAK);
+                return response;
+            }
+            LOGGER.debug("Account, with accountUid "+account.getAccountUid()+", check result: positive");
 
-        //add message
-        return null;
+            String accountUid = account.getAccountUid();
+
+            LOGGER.debug("Going into Client Service Layer to retrieve savings account");
+            //Get savings account for associated accountUid
+            SavingAccountSummary savingsAccount = clientService.getSavingsAccount(accountUid, account.getCurrency());
+
+            // Get current timestamp
+            Instant instant = Instant.now();
+
+            LOGGER.debug("Going into Client Service Layer to get last round up transfer timestamp");
+            // last time stamp from feed of this savings account
+            // Ensures no transactions are missed
+            String lastTimeStamp = clientService.getLastRoundUpTransferTimeStamp(accountUid,
+                    savingsAccount.getSavingsGoalUid(), instant);
+
+            long currentTimeStamp = instant.toEpochMilli();
+
+            // Will flag up the delay in calling this service
+            // Logic not written yet, default to false
+            if (checkIfTransferHasBeenLongerThanAWeek(lastTimeStamp, currentTimeStamp)) {
+                LOGGER.info("Longer than a week since last savings transfer. Last transfer data: "+lastTimeStamp);
+                String message = response.getMessage();
+                message+=DefaultData.OVER_A_WEEK+DefaultData.LINE_BREAK;
+                response.setMessage(message);
+            }
+
+            LOGGER.info("Calculating round up savings ");
+            //calculate how much going into savings
+            int savingsAddition = calculatingWeeklySavings(accountUid, account.getDefaultCategory(), lastTimeStamp,
+                    String.valueOf(currentTimeStamp));
+            response.setPotentialSavings(savingsAddition);
+
+            // get balance check
+            String overdraftMessage=DefaultData.OVERDRAFT_STATUS;
+            overdraftMessage += (clientService.checkIfRoundUpServicePushesBalanceIntoOverDraft(accountUid, savingsAddition))
+                    ? DefaultData.IN_OVERDRAFT_TRUE : DefaultData.IN_OVERDRAFT_False;
+
+            String oldMessage=response.getMessage();
+            response.setMessage(oldMessage+overdraftMessage+DefaultData.LINE_BREAK);
+
+            //Creating unique TransferUid
+            UUID transferUid = UUID.fromString(DefaultData.UUID_INIT);
+            int uniqueTransferUid = transferUid.clockSequence();
+            LOGGER.debug("Creating transferUid: " +uniqueTransferUid);
+
+            //Transfer to savings account
+            boolean success = clientService.transferToSavingsAccount(savingsAccount, savingsAddition, accountUid,
+                    uniqueTransferUid);
+            response.setSuccessfulTransfer(success);
+            LOGGER.info("Round up money saving service success: "+success);
+            if(success) {
+                response.setTransferUid(uniqueTransferUid);
+            }
+
+            LOGGER.debug("Returning response");
+            return response;
+        } catch (Exception e) {
+            LOGGER.warn("Exception thrown.");
+            throw new Exception("External call error. Message: "+e.getMessage());
+            // accountHolderAccessToken LOG
+        }
     }
 
     private boolean checkIfTransferHasBeenLongerThanAWeek(String lastTimeStamp, long currentTimeStamp) {
-        return true;
+        // Need to figure translation back with these
+        LOGGER.debug("Check for over week since last transfer default false");
+        return false;
     }
 
-    //Haven't added logic yet
+    // Put in any required checks of the account
     private boolean accountChecks(Account account){
-        account.getCurrency(); //check currency maybe?
+        // ie. if the account has to be personal for the round-up service to apply
         account.getName(); // check personal
         return true;
     }
 
-    public int calculatingWeeklySavings(String accountUid, String categoryUid, String lastTimeStamp, String currentTimeStamp){
+    public int calculatingWeeklySavings(String accountUid, String categoryUid, String lastTimeStamp,
+                                        String currentTimeStamp) throws Exception {
         //get list of transactions from last savings transfer and now
-        List<FeedItemSummary> feedItems =clientService.getWeeksTransactions(accountUid, categoryUid,lastTimeStamp, currentTimeStamp);
+        LOGGER.debug("Going into Client Service Layer to get list of transactions. CategoryUid: "+categoryUid);
+        List<FeedItemSummary> feedItems =clientService.getWeeksTransactions(accountUid, categoryUid,lastTimeStamp,
+                currentTimeStamp);
         //equals feed item but minimised to amounts as thats all i want
 
         //get round up amount
@@ -86,6 +136,7 @@ public class RoundUpServiceImpl implements RoundUpService{
         for (FeedItemSummary item:feedItems) {
             savingsAddition =+ 100-(item.getAmount()%100);
         }
+        LOGGER.info("Calculated amount to be transfered to savings");
         return savingsAddition;
     }
 
