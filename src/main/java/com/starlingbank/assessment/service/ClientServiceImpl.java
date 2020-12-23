@@ -1,6 +1,9 @@
 package com.starlingbank.assessment.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.starlingbank.assessment.model.*;
 import com.starlingbank.assessment.model.clientResponse.Accounts;
 import com.starlingbank.assessment.model.clientResponse.SavingAccounts;
@@ -52,55 +55,60 @@ public class ClientServiceImpl implements ClientService {
     }
 
     public Accounts getAccountHoldersAccounts(String accountHolderAccessToken) throws Exception {
-            createAuthorizationValue(accountHolderAccessToken);
-            // Unsure if calling the method to build headers will work
-            // build the request
-            HttpEntity request = new HttpEntity(buildHeaders());
+        createAuthorizationValue(accountHolderAccessToken);
+        // Unsure if calling the method to build headers will work
+        // build the request
+        HttpEntity request = new HttpEntity(buildHeaders());
 
-            String url = rootPath + "/accounts";
-            LOGGER.debug(url);
+        String url = rootPath + "/accounts";
+        LOGGER.debug(url);
 
-            LOGGER.info("Making external call for list of Account Holder's accounts");
-            // HTTP call
-            ResponseEntity<Accounts> response = this.restTemplate.exchange(url, HttpMethod.GET, request, Accounts.class);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                return response.getBody();
-            } else {
-                LOGGER.warn("Client response status: "+response.getStatusCode());
-                throw new Exception(DefaultData.EXTERNAL_CALL_ERROR_MESSAGE + response.getStatusCode());
-            }
+        LOGGER.info("Making external call for list of Account Holder's accounts");
+        // HTTP call
+        ResponseEntity<Accounts> response = this.restTemplate.exchange(url, HttpMethod.GET, request, Accounts.class);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return response.getBody();
+        } else {
+            LOGGER.warn("Client response status: "+response.getStatusCode());
+            throw new Exception(DefaultData.EXTERNAL_CALL_ERROR_MESSAGE + response.getStatusCode());
+        }
     }
 
     public SavingAccountSummary getSavingsAccount(String accountUid , String currency) throws Exception {
-            // build the request
-            HttpEntity request = new HttpEntity(buildHeaders());
+        // build the request
+        HttpEntity request = new HttpEntity(buildHeaders());
 
-            String url = rootPath + "/account/" + accountUid + "/savings-goals";
+        String url = rootPath + "/account/" + accountUid + "/savings-goals";
 
-            // HTTP call
-            LOGGER.info("Making external call for list of account's savings accounts");
-            ResponseEntity<SavingAccounts> response = this.restTemplate.exchange(url, HttpMethod.GET, request,
-                    SavingAccounts.class);
+        // HTTP call
+        LOGGER.info("Making external call for list of account's savings accounts");
+        ResponseEntity<Object> response = this.restTemplate.exchange(url, HttpMethod.GET, request,
+                Object.class);
 
-            SavingAccountSummary savingAccountSummary;
+        SavingAccountSummary savingAccountSummary;
 
-
-            // TODO LINKED HASHMAP
-
-            /// If this doesnt work try linked hashMap to get the values required
+            /// If this doesnt work try linked hashMap to get the values rrequired
             if (response.getStatusCode() == HttpStatus.OK) {
-                List<JsonNode> listOfSavings = null;
-//                        response.getBody().getSavingAccounts();
-                JsonNode jsonNode = null;
-                if (listOfSavings==null) {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode fullResponseNode = mapper.valueToTree(response.getBody());
+
+                ArrayNode object= (ArrayNode) fullResponseNode.get("savingsGoalList");
+                ArrayList<JsonNode> listOfSavingsAccounts = new ArrayList();
+
+                for(int i=0;i<object.size();i++){
+                    listOfSavingsAccounts.add(object.get(i));
+                }
+
+                if (listOfSavingsAccounts.isEmpty()) {
                     LOGGER.debug("Account has no savings accounts");
                     //create new account
                     savingAccountSummary = createFutureAdventuresSavingsAccount(accountUid, currency);
                 } else {
-                    for (int i = 0; i < listOfSavings.size(); i++) {
+                    JsonNode jsonNode = null;
+                    for (int i = 0; i < listOfSavingsAccounts.size(); i++) {
                         // Specifying the name of the savings account
-                        if (listOfSavings.get(i).get("name").asText() == DefaultData.SAVINGS_GOALS_NAME)
-                            jsonNode = listOfSavings.get(i);
+                        if (listOfSavingsAccounts.get(i).get("name").asText().equals(DefaultData.SAVINGS_GOALS_NAME))
+                            jsonNode = listOfSavingsAccounts.get(i);
                     }
                     if (jsonNode == null) {
                         LOGGER.debug("Account hasn't got correct savings account, name: " + DefaultData.SAVINGS_GOALS_NAME);
@@ -242,20 +250,26 @@ public class ClientServiceImpl implements ClientService {
         HttpEntity request = new HttpEntity(buildHeaders());
 
         // Get feed from past month
-        Instant monthAgo=instant.minus(1, ChronoUnit.MONTHS);
+        Instant threeWeeksAgo=instant.minus(21, ChronoUnit.DAYS);
         String url = rootPath+"/feed/account/"+accountUid+"/category/"+savingsGoalUid+"" +
-                "?changesSince="+monthAgo.toEpochMilli();
+                "?changesSince="+threeWeeksAgo.toEpochMilli();
 
-        LOGGER.info("Making external call for savings account transactions since "+monthAgo.toEpochMilli());
+        LOGGER.info("Making external call for savings account transactions since "+threeWeeksAgo.toEpochMilli());
         // HTTP call
-        ResponseEntity<List> response = this.restTemplate.exchange(url, HttpMethod.GET, request,List.class);
+        ResponseEntity<Object> response = this.restTemplate.exchange(url, HttpMethod.GET, request,Object.class);
         //Check the response
         if (response.getStatusCode()!= HttpStatus.OK){
             LOGGER.warn("Client response status: "+response.getStatusCode());
             throw new Exception(DefaultData.EXTERNAL_CALL_ERROR_MESSAGE + response.getStatusCode());
         }
 
-        List<JsonNode> feedItemsFull = response.getBody();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode fullResponseNode = mapper.valueToTree(response.getBody());
+        ArrayNode object= (ArrayNode) fullResponseNode.get("feedItems");
+        ArrayList<JsonNode> feedItemsFull = new ArrayList();
+
+//        List<JsonNode> feedItemsFull = response.getBody();
+
         JsonNode lastFeedItem = feedItemsFull.get(feedItemsFull.size()-1);
         if(lastFeedItem.get("direction").equals("IN"))
             // Can add check of reference how this could be set

@@ -1,0 +1,14 @@
+Pick up after Christmas notes:
+
+when making calls to client this is not the correct date format required
+threeWeeksAgo.toEpochMilli()
+Desired format is: 2020-01-01T12:34:56.000Z
+Figure out how to get that
+Needs to be correct in 3 places
+-This would also change logic in RoundUpService, try and neaten up
+-This might make checking if been over a week simple
+
+
+Check the Responses from client, change to Object and map to node
+
+TESTS!!!!!!
