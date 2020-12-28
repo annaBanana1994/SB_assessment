@@ -24,14 +24,17 @@ public class DefaultData {
 
     public final static String OVER_A_WEEK ="The last round up transfer into this savings account was over a week ago";
 
-    public final static String LINE_BREAK ="/n";
+    public final static String LINE_BREAK ="\n";
 
-    public final static String UUID_INIT="c81d4e2e-bcf2-11e6-869b-7df92533d2db";
 
     public final static String OVERDRAFT_STATUS="Round up service transfer status: ";
     public final static String IN_OVERDRAFT_TRUE ="In overdraft";
     public final static String IN_OVERDRAFT_False="Funds available";
 
     public final static String EXTERNAL_CALL_ERROR_MESSAGE=" Client API status code: ";
+
+    public final static String BEGINNING_2020_TS = "2020-01-01T00:00:00.000Z";
+
+    public final static String NO_PREVIOUS_TRANSACTIONS_MESSAGE ="No previous transaction record for the savings account";
 
 }

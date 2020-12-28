@@ -3,10 +3,8 @@ package com.starlingbank.assessment.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.starlingbank.assessment.model.*;
 import com.starlingbank.assessment.model.clientResponse.Accounts;
-import com.starlingbank.assessment.model.clientResponse.SavingAccounts;
 import com.starlingbank.assessment.model.payload.AddToSavingsInfo;
 import com.starlingbank.assessment.model.payload.Amount;
 import com.starlingbank.assessment.model.payload.NewSavingsGoalsAccountInfo;
@@ -186,25 +184,33 @@ public class ClientServiceImpl implements ClientService {
         HttpEntity request = new HttpEntity(buildHeaders());
 
         String url = rootPath+"/feed/account/"+accountUid+"/category/"+defaultCategory+"/transactions-between?" +
-                "minTransactionTimestamp="+lastTimeStamp+"&maxTransactionTimestamp"+currentTimeStamp;
+                "minTransactionTimestamp="+lastTimeStamp+"&maxTransactionTimestamp="+currentTimeStamp;
 
         LOGGER.info("Making external call to get feed of transaction between "+lastTimeStamp+" and "+currentTimeStamp);
         // HTTP call
-        ResponseEntity<List> response = this.restTemplate.exchange(url, HttpMethod.GET, request,List.class);
+        ResponseEntity<Object> response = this.restTemplate.exchange(url, HttpMethod.GET, request,Object.class);
         //Check the response
         if (response.getStatusCode()!= HttpStatus.OK){
             LOGGER.warn("Client response status: "+response.getStatusCode());
             throw new Exception(DefaultData.EXTERNAL_CALL_ERROR_MESSAGE + response.getStatusCode());
         }
 
-        List<JsonNode> feedItemsFull = response.getBody();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode fullResponseNode = mapper.valueToTree(response.getBody());
+        ArrayNode object =(ArrayNode) fullResponseNode.get("feedItems");
+        ArrayList<JsonNode> listOfFeedItems = new ArrayList<>();
+
+        for(int i=0;i<object.size();i++){
+            listOfFeedItems.add(object.get(i));
+        }
+
         ArrayList<FeedItemSummary> feedItemsSummariesed = new ArrayList<>();
 
         // Extract the information required and save in the summary model
-        for (JsonNode node:feedItemsFull) {
+        for (JsonNode node:listOfFeedItems) {
             FeedItemSummary feedItemSummary = new FeedItemSummary();
             //Only the transactions going out
-            if (node.get("direction").asText()=="OUT"){
+            if (node.get("direction").asText().equals("OUT")){
                 feedItemSummary.setDirection(node.get("direction").asText());
                 feedItemSummary.setFeedItemUid(node.get("feedItemUid").asText());
                 feedItemSummary.setAmount(node.get("amount").get("minorUnits").asInt());
@@ -218,18 +224,20 @@ public class ClientServiceImpl implements ClientService {
     }
 
     public boolean transferToSavingsAccount(SavingAccountSummary savingsAccount, int savingsAddition, String accountUid,
-                                         int transferId) throws Exception {
+                                         UUID transferId) throws Exception {
         LOGGER.debug("Build request to transfer "+savingsAddition+"in "+savingsAccount.getCurrency()+ " into "+
                 savingsAccount.getSavingsGoalUid());
         Amount amount = new Amount(savingsAccount.getCurrency(),savingsAddition);
         AddToSavingsInfo addToSavingsInfo = new AddToSavingsInfo(amount);
+
         //build request
         HttpEntity<AddToSavingsInfo> request = new HttpEntity<>(addToSavingsInfo, buildHeaders());
 
         String url = rootPath+"/account/"+accountUid+"/savings-goals/"+savingsAccount.getSavingsGoalUid()+"/add-" +
-                "money/{"+transferId+"}";
+                "money/"+transferId;
 
         LOGGER.info("Making external call to transfer money into savings");
+
         // HTTP call
         ResponseEntity<JsonNode> response = this.restTemplate.exchange(url, HttpMethod.PUT, request,JsonNode.class);
 
@@ -252,7 +260,7 @@ public class ClientServiceImpl implements ClientService {
         // Get feed from past month
         Instant threeWeeksAgo=instant.minus(21, ChronoUnit.DAYS);
         String url = rootPath+"/feed/account/"+accountUid+"/category/"+savingsGoalUid+"" +
-                "?changesSince="+threeWeeksAgo.toEpochMilli();
+                "?changesSince="+threeWeeksAgo;
 
         LOGGER.info("Making external call for savings account transactions since "+threeWeeksAgo.toEpochMilli());
         // HTTP call
@@ -266,12 +274,15 @@ public class ClientServiceImpl implements ClientService {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode fullResponseNode = mapper.valueToTree(response.getBody());
         ArrayNode object= (ArrayNode) fullResponseNode.get("feedItems");
-        ArrayList<JsonNode> feedItemsFull = new ArrayList();
 
-//        List<JsonNode> feedItemsFull = response.getBody();
+        if(object.isEmpty())
+            return null;
 
-        JsonNode lastFeedItem = feedItemsFull.get(feedItemsFull.size()-1);
-        if(lastFeedItem.get("direction").equals("IN"))
+        // Get last transaction
+        JsonNode lastFeedItem = object.get(object.size()-1);
+
+        // Check last transaction was coming in
+        if(lastFeedItem.get("direction").asText().equals("IN"))
             // Can add check of reference how this could be set
             return lastFeedItem.get("transactionTime").asText();
         else {

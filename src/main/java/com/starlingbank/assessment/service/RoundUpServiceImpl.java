@@ -1,6 +1,5 @@
 package com.starlingbank.assessment.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.starlingbank.assessment.model.Account;
 import com.starlingbank.assessment.model.FeedItemSummary;
 import com.starlingbank.assessment.model.SavingAccountSummary;
@@ -44,7 +43,8 @@ public class RoundUpServiceImpl implements RoundUpService{
             if(!accountChecks(account)) {
                 LOGGER.debug("Account, with accountUid "+account.getAccountUid()+", check result: negative");
                 response.setSuccessfulTransfer(false);
-                response.setMessage(DefaultData.CHECK_ACCOUNT_FAIL+DefaultData.LINE_BREAK);
+                response.setMessage(addToMessage(response.getMessage(),DefaultData.CHECK_ACCOUNT_FAIL+
+                        DefaultData.LINE_BREAK));
                 return response;
             }
             LOGGER.debug("Account, with accountUid "+account.getAccountUid()+", check result: positive");
@@ -64,7 +64,13 @@ public class RoundUpServiceImpl implements RoundUpService{
             String lastTimeStamp = clientService.getLastRoundUpTransferTimeStamp(accountUid,
                     savingsAccount.getSavingsGoalUid(), instant);
 
-            long currentTimeStamp = instant.toEpochMilli();
+            if (lastTimeStamp==null){
+                //default for since the start of 2020
+                lastTimeStamp=DefaultData.BEGINNING_2020_TS;
+                response.setMessage(addToMessage(response.getMessage(), DefaultData.NO_PREVIOUS_TRANSACTIONS_MESSAGE));
+            }
+
+            String currentTimeStamp = instant.toString();
 
             // Will flag up the delay in calling this service
             // Logic not written yet, default to false
@@ -78,29 +84,32 @@ public class RoundUpServiceImpl implements RoundUpService{
             LOGGER.info("Calculating round up savings ");
             //calculate how much going into savings
             int savingsAddition = calculatingWeeklySavings(accountUid, account.getDefaultCategory(), lastTimeStamp,
-                    String.valueOf(currentTimeStamp));
+                    currentTimeStamp);
             response.setPotentialSavings(savingsAddition);
 
-            // get balance check
+            // Logging if transaction means account goes into overdraft
             String overdraftMessage=DefaultData.OVERDRAFT_STATUS;
-            overdraftMessage += (clientService.checkIfRoundUpServicePushesBalanceIntoOverDraft(accountUid, savingsAddition))
-                    ? DefaultData.IN_OVERDRAFT_TRUE : DefaultData.IN_OVERDRAFT_False;
+            response.setInOverdraft(clientService.checkIfRoundUpServicePushesBalanceIntoOverDraft(accountUid,
+                    savingsAddition));
 
-            String oldMessage=response.getMessage();
-            response.setMessage(oldMessage+overdraftMessage+DefaultData.LINE_BREAK);
+            overdraftMessage += response.getInOverdraft() ? DefaultData.IN_OVERDRAFT_TRUE :
+                    DefaultData.IN_OVERDRAFT_False;
+
+            response.setMessage(addToMessage(response.getMessage(),overdraftMessage+
+                    DefaultData.LINE_BREAK));
+
 
             //Creating unique TransferUid
-            UUID transferUid = UUID.fromString(DefaultData.UUID_INIT);
-            int uniqueTransferUid = transferUid.clockSequence();
-            LOGGER.debug("Creating transferUid: " +uniqueTransferUid);
+            UUID transferUid=UUID.randomUUID();
+            LOGGER.debug("Creating transferUid: " +transferUid);
 
             //Transfer to savings account
             boolean success = clientService.transferToSavingsAccount(savingsAccount, savingsAddition, accountUid,
-                    uniqueTransferUid);
+                    transferUid);
             response.setSuccessfulTransfer(success);
             LOGGER.info("Round up money saving service success: "+success);
             if(success) {
-                response.setTransferUid(uniqueTransferUid);
+                response.setTransferUid(transferUid);
             }
 
             LOGGER.debug("Returning response");
@@ -112,10 +121,25 @@ public class RoundUpServiceImpl implements RoundUpService{
         }
     }
 
-    private boolean checkIfTransferHasBeenLongerThanAWeek(String lastTimeStamp, long currentTimeStamp) {
-        // Need to figure translation back with these
+    //TODO different years, different months
+    //Maybe just change string back into instant cause then can use interval
+    private boolean checkIfTransferHasBeenLongerThanAWeek(String lastTimeStamp, String currentTimeStamp) {
+        // should be in same format now
+
+        String[] previousDate = getDateFormatToCompare(lastTimeStamp);
+        String[] currentDate = getDateFormatToCompare(currentTimeStamp);
+
+        //2020-01-01T12:34:56.000Z
+        //2020-01-07T13:14:52.777Z
+
         LOGGER.debug("Check for over week since last transfer default false");
         return false;
+    }
+
+    private String[] getDateFormatToCompare(String date){
+        String[] split=date.split("-");
+        split[2]=split[2].substring(0,2);
+        return split;
     }
 
     // Put in any required checks of the account
@@ -136,10 +160,13 @@ public class RoundUpServiceImpl implements RoundUpService{
         //get round up amount
         int savingsAddition=0;
         for (FeedItemSummary item:feedItems) {
-            savingsAddition =+ 100-(item.getAmount()%100);
+            savingsAddition+=100-(item.getAmount()%100);
         }
         LOGGER.info("Calculated amount to be transfered to savings");
         return savingsAddition;
     }
 
+    private String addToMessage(String oldMessage, String additionalMessage){
+        return oldMessage==null?additionalMessage:oldMessage+additionalMessage;
+    }
 }

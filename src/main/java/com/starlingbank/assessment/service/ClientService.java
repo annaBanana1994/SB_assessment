@@ -9,6 +9,7 @@ import com.starlingbank.assessment.model.clientResponse.Accounts;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 public interface ClientService {
 
@@ -18,7 +19,7 @@ public interface ClientService {
 
     List<FeedItemSummary> getWeeksTransactions(String accountUid, String defaultCategory, String lastTimeStamp, String currentTimeStamp) throws Exception;
 
-    boolean transferToSavingsAccount(SavingAccountSummary savingsAccount, int savingsAddition, String accountUid, int transferUid) throws Exception;
+    boolean transferToSavingsAccount(SavingAccountSummary savingsAccount, int savingsAddition, String accountUid, UUID transferUid) throws Exception;
 
     //Check refernce if it has one
     String getLastRoundUpTransferTimeStamp(String accountUid, String savingsGoalUid, Instant instant) throws Exception;
