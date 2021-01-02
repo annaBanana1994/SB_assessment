@@ -7,5 +7,4 @@ import com.starlingbank.assessment.model.response.RoundUpResponseMessage;
 public interface RoundUpService {
     RoundUpResponseMessage transferWeeksSavings(String accountHolderAccessToken) throws Exception;
 
-    int calculatingWeeklySavings(String accountUid, String categoryUid, String lastTimeStamp, String currentTimeStamp) throws Exception;
 }

@@ -17,7 +17,7 @@ public interface ClientService {
 
     SavingAccountSummary getSavingsAccount(String accountUid, String currency) throws Exception;
 
-    List<FeedItemSummary> getWeeksTransactions(String accountUid, String defaultCategory, String lastTimeStamp, String currentTimeStamp) throws Exception;
+    List<FeedItemSummary> getWeeksOutGoingTransactions(String accountUid, String defaultCategory, String lastTimeStamp, String currentTimeStamp) throws Exception;
 
     boolean transferToSavingsAccount(SavingAccountSummary savingsAccount, int savingsAddition, String accountUid, UUID transferUid) throws Exception;
 

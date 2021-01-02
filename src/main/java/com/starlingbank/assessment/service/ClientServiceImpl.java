@@ -178,7 +178,7 @@ public class ClientServiceImpl implements ClientService {
         return savingAccountSummary;
     }
 
-    public List<FeedItemSummary> getWeeksTransactions(String accountUid, String defaultCategory, String lastTimeStamp,
+    public List<FeedItemSummary> getWeeksOutGoingTransactions(String accountUid, String defaultCategory, String lastTimeStamp,
                                                       String currentTimeStamp) throws Exception {
         // build the request
         HttpEntity request = new HttpEntity(buildHeaders());

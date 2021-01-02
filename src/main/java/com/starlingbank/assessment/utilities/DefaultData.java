@@ -26,6 +26,7 @@ public class DefaultData {
 
     public final static String LINE_BREAK ="\n";
 
+    public final static String NO_OUTGOING_TRANSACTIONS="There have been no outgoing transactions therefore no it is not possible to provide the roundup service";
 
     public final static String OVERDRAFT_STATUS="Round up service transfer status: ";
     public final static String IN_OVERDRAFT_TRUE ="In overdraft";
@@ -37,4 +38,5 @@ public class DefaultData {
 
     public final static String NO_PREVIOUS_TRANSACTIONS_MESSAGE ="No previous transaction record for the savings account";
 
+    public final static String NO_OUTGOING_TRANSACTIONS_SINCE="There have been not outgoing transactions since: ";
 }

@@ -81,13 +81,23 @@ public class RoundUpServiceImpl implements RoundUpService{
                 response.setMessage(message);
             }
 
+            //TODO log if none and create response
             LOGGER.info("Calculating round up savings ");
             //calculate how much going into savings
             int savingsAddition = calculatingWeeklySavings(accountUid, account.getDefaultCategory(), lastTimeStamp,
                     currentTimeStamp);
+            //If there have been no outgoing transactions in the given time period
+            if(savingsAddition==0) {
+                LOGGER.info(DefaultData.NO_OUTGOING_TRANSACTIONS+lastTimeStamp);
+                response.setMessage(DefaultData.NO_OUTGOING_TRANSACTIONS);
+                response.setPotentialSavings(savingsAddition);
+                response.setSuccessfulTransfer(false);
+                return response;
+            }
+
             response.setPotentialSavings(savingsAddition);
 
-            // Logging if transaction means account goes into overdraft
+            // Checking if transaction means account goes into overdraft
             String overdraftMessage=DefaultData.OVERDRAFT_STATUS;
             response.setInOverdraft(clientService.checkIfRoundUpServicePushesBalanceIntoOverDraft(accountUid,
                     savingsAddition));
@@ -95,9 +105,7 @@ public class RoundUpServiceImpl implements RoundUpService{
             overdraftMessage += response.getInOverdraft() ? DefaultData.IN_OVERDRAFT_TRUE :
                     DefaultData.IN_OVERDRAFT_False;
 
-            response.setMessage(addToMessage(response.getMessage(),overdraftMessage+
-                    DefaultData.LINE_BREAK));
-
+            response.setMessage(addToMessage(response.getMessage(),overdraftMessage));
 
             //Creating unique TransferUid
             UUID transferUid=UUID.randomUUID();
@@ -149,16 +157,17 @@ public class RoundUpServiceImpl implements RoundUpService{
         return true;
     }
 
-    public int calculatingWeeklySavings(String accountUid, String categoryUid, String lastTimeStamp,
+    private int calculatingWeeklySavings(String accountUid, String categoryUid, String lastTimeStamp,
                                         String currentTimeStamp) throws Exception {
         //get list of transactions from last savings transfer and now
         LOGGER.debug("Going into Client Service Layer to get list of transactions. CategoryUid: "+categoryUid);
-        List<FeedItemSummary> feedItems =clientService.getWeeksTransactions(accountUid, categoryUid,lastTimeStamp,
+        List<FeedItemSummary> feedItems =clientService.getWeeksOutGoingTransactions(accountUid, categoryUid,lastTimeStamp,
                 currentTimeStamp);
         //equals feed item but minimised to amounts as thats all i want
 
         //get round up amount
         int savingsAddition=0;
+
         for (FeedItemSummary item:feedItems) {
             savingsAddition+=100-(item.getAmount()%100);
         }
@@ -167,6 +176,6 @@ public class RoundUpServiceImpl implements RoundUpService{
     }
 
     private String addToMessage(String oldMessage, String additionalMessage){
-        return oldMessage==null?additionalMessage:oldMessage+additionalMessage;
+        return oldMessage==null?additionalMessage:oldMessage+DefaultData.LINE_BREAK+additionalMessage;
     }
 }
