@@ -1,6 +1,6 @@
 package com.starlingbank.assessment.controller;
 
-import com.starlingbank.assessment.TestData;
+import com.starlingbank.assessment.data.TestData;
 import com.starlingbank.assessment.service.RoundUpServiceImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -12,7 +12,6 @@ import com.starlingbank.assessment.utilities.DefaultData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -27,18 +26,11 @@ public class ClientServiceImpl implements ClientService {
     @Autowired
     private RestTemplate restTemplate;
 
-    // Dont Think you can use this method with custom hearderss
-    // RequestEntity<MyRequest> request = RequestEntity
-    //     .post("https://example.com/{foo}", "bar")
-    //     .accept(MediaType.APPLICATION_JSON)
-    //     .body(body);
-
     private static final Logger LOGGER= LoggerFactory.getLogger(ClientServiceImpl.class);
 
     private String accessToken;
 
-    @Value("${clientAPI.rootPath}")
-    private String rootPath;
+    private String rootPath=DefaultData.ROOT_PATH;
 
     HttpHeaders headers = new HttpHeaders();
 
@@ -54,7 +46,7 @@ public class ClientServiceImpl implements ClientService {
 
     public Accounts getAccountHoldersAccounts(String accountHolderAccessToken) throws Exception {
         createAuthorizationValue(accountHolderAccessToken);
-        // Unsure if calling the method to build headers will work
+
         // build the request
         HttpEntity request = new HttpEntity(buildHeaders());
 
@@ -75,7 +67,6 @@ public class ClientServiceImpl implements ClientService {
     public SavingAccountSummary getSavingsAccount(String accountUid , String currency) throws Exception {
         // build the request
         HttpEntity request = new HttpEntity(buildHeaders());
-
         String url = rootPath + "/account/" + accountUid + "/savings-goals";
 
         // HTTP call
@@ -93,9 +84,7 @@ public class ClientServiceImpl implements ClientService {
                 ArrayNode object= (ArrayNode) fullResponseNode.get("savingsGoalList");
                 ArrayList<JsonNode> listOfSavingsAccounts = new ArrayList();
 
-                for(int i=0;i<object.size();i++){
-                    listOfSavingsAccounts.add(object.get(i));
-                }
+                for(int i=0;i<object.size();i++){ listOfSavingsAccounts.add(object.get(i));}
 
                 if (listOfSavingsAccounts.isEmpty()) {
                     LOGGER.debug("Account has no savings accounts");
@@ -113,6 +102,7 @@ public class ClientServiceImpl implements ClientService {
                         //create the 'Future Adventures' account
                         savingAccountSummary = createFutureAdventuresSavingsAccount(accountUid, currency);
                     } else {
+                        //last in the list
                         savingAccountSummary = translateJsonNodeIntoSummary(jsonNode);
                     }
                 }
@@ -139,7 +129,7 @@ public class ClientServiceImpl implements ClientService {
 
         SavingAccountSummary savingAccountSummary;
 
-        if(response.getStatusCode() == HttpStatus.OK) {
+        if(response.getStatusCode() == HttpStatus.OK&&response.getBody().get("success").asBoolean()==true) {
             LOGGER.debug("Savings account successfully created");
             String savingsGoalUid=response.getBody().get("savingsGoalUid").asText();
             savingAccountSummary=getSavingAccount(savingsGoalUid,accountUid);
@@ -154,7 +144,7 @@ public class ClientServiceImpl implements ClientService {
             //build request
             HttpEntity request = new HttpEntity(buildHeaders());
 
-            String url = rootPath + "/account/" + accountUid + "/savings-goals/" + savingsGoalUid + "";
+            String url = rootPath + "/account/" + accountUid + "/savings-goals/" + savingsGoalUid;
 
             LOGGER.debug("Making external call to get savings account "+savingsGoalUid);
             // HTTP call
@@ -168,7 +158,7 @@ public class ClientServiceImpl implements ClientService {
 
             return newSavingAccountSummary;
     }
-    public SavingAccountSummary translateJsonNodeIntoSummary(JsonNode jsonNode){
+    private SavingAccountSummary translateJsonNodeIntoSummary(JsonNode jsonNode){
         SavingAccountSummary savingAccountSummary = new SavingAccountSummary();
         savingAccountSummary.setCurrency(jsonNode.get("target").get("currency").asText());
         savingAccountSummary.setName(jsonNode.get("name").asText());

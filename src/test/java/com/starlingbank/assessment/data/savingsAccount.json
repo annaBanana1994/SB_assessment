@@ -1,0 +1,13 @@
+{
+  "savingsGoalUid": "1",
+  "name": "Future Adventures",
+  "target": {
+    "currency": "GBP",
+    "minorUnits": 100000
+  },
+  "totalSaved": {
+    "currency": "GBP",
+    "minorUnits": 0
+  },
+  "savedPercentage": 0
+}

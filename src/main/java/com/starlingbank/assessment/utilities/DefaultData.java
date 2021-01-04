@@ -39,4 +39,5 @@ public class DefaultData {
     public final static String NO_PREVIOUS_TRANSACTIONS_MESSAGE ="No previous transaction record for the savings account";
 
     public final static String NO_OUTGOING_TRANSACTIONS_SINCE="There have been not outgoing transactions since: ";
+    public static final String ROOT_PATH = "https://api-sandbox.starlingbank.com/api/v2";
 }
