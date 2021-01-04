@@ -1,4 +1,4 @@
-package com.starlingbank.assessment.data;
+package com.starlingbank.assessment;
 
 import com.starlingbank.assessment.model.Account;
 import com.starlingbank.assessment.model.FeedItemSummary;
@@ -121,6 +121,22 @@ public class TestData {
         return accountsModel;
     }
 
+    public static Accounts accountsBigList(){
+        Accounts accountsModel = new Accounts();
+        List<Account> accounts = new ArrayList<>();
+        Account account1 = new Account("1","PRIMARY", "ccddccdd-ccdd-ccdd-ccdd-ccddccddccdd",
+                "GBP", "2021-01-03T18:36:27.383Z","Personal");
+        Account account2 = new Account("2","PRIMARY", "ccddccdd-ccdd-ccdd-ccdd-ccddccddccdd",
+                "GBP", "2021-01-03T18:36:27.383Z","Personal");
+        Account account3 = new Account("3","PRIMARY", "ccddccdd-ccdd-ccdd-ccdd-ccddccddccdd",
+                "GBP", "2021-01-03T18:36:27.383Z","Personal");
+        accounts.add(account1);
+        accounts.add(account2);
+        accounts.add(account3);
+        accountsModel.setAccounts(accounts);
+        return accountsModel;
+    }
+
     public static HttpHeaders generateHeaders(){
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -132,5 +148,10 @@ public class TestData {
         NewSavingsGoalsAccountInfo newSavingsGoalsAccountInfo = new NewSavingsGoalsAccountInfo(DefaultData.
                 SAVINGS_GOALS_NAME,DefaultData.SAVINGS_GOALS_CURRENCY, DefaultData.TARGET,DefaultData.SAVINGS_GOALS_PHOTO );
         return newSavingsGoalsAccountInfo;
+    }
+
+    public static SavingAccountSummary savingsAccountTest(){
+        SavingAccountSummary savingsAccount = new SavingAccountSummary();
+        return savingsAccount;
     }
 }

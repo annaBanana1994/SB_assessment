@@ -1,0 +1,56 @@
+{
+  "savingsGoalList": [
+    {
+      "savingsGoalUid": "1",
+      "name": "Future Adventures",
+      "target": {
+        "currency": "GBP",
+        "minorUnits": 123456
+      },
+      "totalSaved": {
+        "currency": "GBP",
+        "minorUnits": 123456
+      },
+      "savedPercentage": 100
+    },
+    {
+      "savingsGoalUid": "2",
+      "name": "Future Adventures",
+      "target": {
+        "currency": "GBP",
+        "minorUnits": 123456
+      },
+      "totalSaved": {
+        "currency": "GBP",
+        "minorUnits": 123456
+      },
+      "savedPercentage": 100
+    },
+    {
+      "savingsGoalUid": "3",
+      "name": "Future Adventures",
+      "target": {
+        "currency": "GBP",
+        "minorUnits": 123456
+      },
+      "totalSaved": {
+        "currency": "GBP",
+        "minorUnits": 123456
+      },
+      "savedPercentage": 100
+    },
+    {
+      "savingsGoalUid": "4",
+      "name": "Future Adventures2",
+      "target": {
+        "currency": "GBP",
+        "minorUnits": 123456
+      },
+      "totalSaved": {
+        "currency": "GBP",
+        "minorUnits": 123456
+      },
+      "savedPercentage": 100
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 package com.starlingbank.assessment.service;
 
-import com.starlingbank.assessment.data.TestData;
+import com.starlingbank.assessment.TestData;
 import com.starlingbank.assessment.model.SavingAccountSummary;
 import com.starlingbank.assessment.model.response.RoundUpResponseMessage;
 import com.starlingbank.assessment.utilities.DefaultData;
