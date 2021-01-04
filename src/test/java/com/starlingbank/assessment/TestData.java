@@ -154,4 +154,8 @@ public class TestData {
         SavingAccountSummary savingsAccount = new SavingAccountSummary();
         return savingsAccount;
     }
+
+    public static String jsonDataPath="assessment/src/test/java/com/starlingbank/assessment/data/";
+
+    public static String userDirectory="/Users/Student/Documents/Coding Projects/";
 }

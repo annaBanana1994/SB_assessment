@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -39,6 +40,9 @@ public class ClientServiceImplTest {
     ClientServiceImpl clientService;
 
     private ObjectMapper mapper = new ObjectMapper();
+
+//    @Value("${user.directory}") // Would need testing profile
+    private String directory=TestData.userDirectory;
 
     @BeforeEach
     public void setUp(){
@@ -81,19 +85,16 @@ public class ClientServiceImplTest {
     @Test
     public void getSavingsAccount_success_nonDefaultSavings_createSavingsAcount() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/savings_list_one.json"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"savings_list_one.json"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
         HttpEntity createRequest=new HttpEntity(TestData.generateNewSavingsAccount(), TestData.generateHeaders());
-        JsonNode jsonNode2 = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/createSavingsAccountMessage.json"));
+        JsonNode jsonNode2 = mapper.readTree(new File(directory+TestData.jsonDataPath+"createSavingsAccountMessage.json"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.PUT, createRequest,
                 JsonNode.class)).thenReturn(new ResponseEntity(jsonNode2, HttpStatus.OK));
 
-        JsonNode jsonNode3 = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/savingsAccount.json"));
+        JsonNode jsonNode3 = mapper.readTree(new File(directory+TestData.jsonDataPath+"savingsAccount.json"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals/1", HttpMethod.GET, getRequest,
                 JsonNode.class)).thenReturn(new ResponseEntity(jsonNode3, HttpStatus.OK));
 
@@ -108,19 +109,16 @@ public class ClientServiceImplTest {
     @Test
     public void getSavingsAccount_success_nonDefaultSavings_BigList_createSavingsAcount() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/savings_list_three"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"savings_list_three"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
         HttpEntity createRequest=new HttpEntity(TestData.generateNewSavingsAccount(), TestData.generateHeaders());
-        JsonNode jsonNode2 = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/createSavingsAccountMessage.json"));
+        JsonNode jsonNode2 = mapper.readTree(new File(directory+TestData.jsonDataPath+"createSavingsAccountMessage.json"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.PUT, createRequest,
                 JsonNode.class)).thenReturn(new ResponseEntity(jsonNode2, HttpStatus.OK));
 
-        JsonNode jsonNode3 = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/savingsAccount.json"));
+        JsonNode jsonNode3 = mapper.readTree(new File(directory+TestData.jsonDataPath+"savingsAccount.json"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals/1", HttpMethod.GET, getRequest,
                 JsonNode.class)).thenReturn(new ResponseEntity(jsonNode3, HttpStatus.OK));
 
@@ -133,8 +131,7 @@ public class ClientServiceImplTest {
     @Test
     public void getSavingsAccount_success_defaultSavingsExist() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/FASavingsList"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"FASavingsList"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
@@ -147,8 +144,7 @@ public class ClientServiceImplTest {
     @Test
     public void getSavingsAccount_success_multipleDefaultSavingsExist_takeLastOne() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/FASavingsList_multiple"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"/FASavingsList_multiple"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
@@ -161,8 +157,7 @@ public class ClientServiceImplTest {
     @Test
     public void translateJsonNodeIntoSummary_allCorrectNodesRead() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/FASavingsList"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"FASavingsList"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
@@ -179,19 +174,16 @@ public class ClientServiceImplTest {
     @Test
     public void getSavingsAccount_success_noSavingsAccounts_createSavingsAcount() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/savings_list_empty"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"savings_list_empty"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
         HttpEntity createRequest=new HttpEntity(TestData.generateNewSavingsAccount(), TestData.generateHeaders());
-        JsonNode jsonNode2 = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/createSavingsAccountMessage.json"));
+        JsonNode jsonNode2 = mapper.readTree(new File(directory+TestData.jsonDataPath+"createSavingsAccountMessage.json"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.PUT, createRequest,
                 JsonNode.class)).thenReturn(new ResponseEntity(jsonNode2, HttpStatus.OK));
 
-        JsonNode jsonNode3 = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/savingsAccount.json"));
+        JsonNode jsonNode3 = mapper.readTree(new File(directory+TestData.jsonDataPath+"savingsAccount.json"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals/1", HttpMethod.GET, getRequest,
                 JsonNode.class)).thenReturn(new ResponseEntity(jsonNode3, HttpStatus.OK));
 
@@ -205,8 +197,7 @@ public class ClientServiceImplTest {
     @Test (expected = Exception.class)
     public void createFutureAdventuresSavingsAccount_fail_unsuccesfulMessage() throws Exception {
         HttpEntity createRequest=new HttpEntity(TestData.generateNewSavingsAccount(), TestData.generateHeaders());
-        JsonNode jsonNode2 = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/createSavingsAccountMessageFail.json"));
+        JsonNode jsonNode2 = mapper.readTree(new File(directory+TestData.jsonDataPath+"createSavingsAccountMessageFail.json"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals", HttpMethod.PUT, createRequest,
                 JsonNode.class)).thenReturn(new ResponseEntity(jsonNode2, HttpStatus.OK));
 
@@ -228,8 +219,7 @@ public class ClientServiceImplTest {
     @Test
     public void getWeeksOutGoingTransactions_success_listOfTwo() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/weeksTransactions"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"weeksTransactions"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/feed/account/1/category/2/transactions-between?minTransactionTimestamp=1&maxTransactionTimestamp=5", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
@@ -242,8 +232,7 @@ public class ClientServiceImplTest {
     @Test
     public void getWeeksOutGoingTransactions_success_onlyOneOut() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/weekTransactions_direction"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"weekTransactions_direction"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/feed/account/1/category/2/transactions-between?minTransactionTimestamp=1&maxTransactionTimestamp=5", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
@@ -254,8 +243,7 @@ public class ClientServiceImplTest {
     @Test
     public void getWeeksOutGoingTransactions_success_ExtractValuesCorrectly() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/weekTransactions_direction"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"weekTransactions_direction"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/feed/account/1/category/2/transactions-between?minTransactionTimestamp=1&maxTransactionTimestamp=5", HttpMethod.GET,
                 getRequest, Object.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
@@ -274,8 +262,7 @@ public class ClientServiceImplTest {
         AddToSavingsInfo addToSavingsInfo = new AddToSavingsInfo(amount);
         HttpEntity request = new HttpEntity(addToSavingsInfo,TestData.generateHeaders());
 
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/savingsTransferSuccess"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"savingsTransferSuccess"));
 
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/account/1/savings-goals/bbccbbcc-bbcc-bbcc-bbcc-bbccbbccbbcc/add-money/aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa", HttpMethod.PUT,
                 request, JsonNode.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
@@ -302,8 +289,7 @@ public class ClientServiceImplTest {
     @Test
     public void checkIfRoundUpServicePushesBalanceIntoOverDraft_success_false() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/fundsAvailableMessage"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"fundsAvailableMessage"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/accounts/1/confirmation-of-funds?targetAmountInMinorUnits=100", HttpMethod.GET,
                 getRequest, JsonNode.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
@@ -313,8 +299,7 @@ public class ClientServiceImplTest {
     @Test
     public void checkIfRoundUpServicePushesBalanceIntoOverDraft_success_true() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/fundsNotAvailableMessage"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"fundsNotAvailableMessage"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/accounts/1/confirmation-of-funds?targetAmountInMinorUnits=100", HttpMethod.GET,
                 getRequest, JsonNode.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.OK));
 
@@ -324,8 +309,7 @@ public class ClientServiceImplTest {
     @Test (expected = Exception.class)
     public void checkIfRoundUpServicePushesBalanceIntoOverDraft_fail() throws Exception {
         HttpEntity getRequest = new HttpEntity(TestData.generateHeaders());
-        JsonNode jsonNode = mapper.readTree(new File("/Users/Student/Documents/Coding Projects/assessment/src" +
-                "/test/java/com/starlingbank/assessment/data/fundsNotAvailableMessage"));
+        JsonNode jsonNode = mapper.readTree(new File(directory+TestData.jsonDataPath+"fundsNotAvailableMessage"));
         when(restTemplate.exchange(DefaultData.ROOT_PATH+"/accounts/1/confirmation-of-funds?targetAmountInMinorUnits=100", HttpMethod.GET,
                 getRequest, JsonNode.class)).thenReturn(new ResponseEntity(jsonNode, HttpStatus.BAD_REQUEST));
 
