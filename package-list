@@ -1,0 +1,9 @@
+com.starlingbank.assessment
+com.starlingbank.assessment.controller
+com.starlingbank.assessment.model
+com.starlingbank.assessment.model.clientResponse
+com.starlingbank.assessment.model.payload
+com.starlingbank.assessment.model.response
+com.starlingbank.assessment.service
+com.starlingbank.assessment.stub
+com.starlingbank.assessment.utilities
